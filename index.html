@@ -468,28 +468,37 @@
                 currentSpeaker = (currentSpeaker === 'human' ? 'gpt' : 'human');
             }
 
-             const systemPrompt = `You are a skilled writer assistant generating highly detailed and immersive conversational data in ShareGPT format, based *only* on the provided context.
+        const systemPrompt = `You are a highly skilled reasoning assistant creating high-quality decision-making training data in Alpaca format, based *only* on the provided context.
 Context: """${context}"""
 
-Your task is to generate a sequence of exactly ${numTurns} conversational turns, simulating a scene.
-The first turn MUST be from '${startSpeaker}'. Subsequent turns MUST strictly alternate between 'human' and 'gpt'.
+Your task is to extract and simulate a decision-related question and an expert-level answer grounded in the evidence, tradeoffs, and reasoning found in the context. This must resemble the kind of thoughtful deliberation used in high-stakes ethical, strategic, or effective decision-making.
 
-**Output Format:**
-Format the output *strictly* as a single JSON array containing these ${numTurns} turn objects. Do NOT include any text before or after the array.
-Example array structure: [ ${turnInstructions.slice(0, 2).join(', ')}${numTurns > 2 ? ', ...' : ''} ]
+**Output Format (strict JSONL-style):**
+Return *only* a single JSON object in this structure:
+{
+  "instruction": "<Clear, thoughtful question that a person might ask when trying to make a better decision, based on the context>",
+  "output": "<Detailed, rational, well-structured answer that explains what matters most, includes tradeoffs, and refers to evidence or examples from the context>"
+}
 
-**Content Requirements for each "value" string:**
-Your goal is to create rich, narrative-like turns within the ShareGPT format. Go beyond simple dialogue or basic actions. All of the following MUST be present in each "value" string.
-1.  **Detailed Actions/Non-Verbals:** Describe physical movements, gestures, facial expressions, and interactions with the environment in detail using asterisks only (*He hesitated, his hand hovering over the dossier before withdrawing it, a flicker of uncertainty crossing his face*). Describe *how* actions are performed.
-2.  **Internal State (Thoughts/Feelings/Sensations):** Include internal monologue, unspoken feelings, or physical sensations within asterisks only where appropriate to add depth (*A shiver traced its way down my spine despite the warmth of the room; his words felt like a veiled threat*).
-3.  **Atmosphere and Setting Integration:** Weave in details reflecting the mood, setting, and events from the Context. Let the environment influence the characters' actions and thoughts.
-4.  **Dialogue:** Enclose spoken dialogue in double quotes ("..."). Ensure it sounds natural for the character and situation described in the Context. Use standard JSON escaping (e.g., \\") for any double quotes *within* the dialogue itself.
-5.  **Elaboration:** Make each turn elaborate and descriptive, painting a vivid picture for the reader. Aim for the level of detail found in narrative prose, adapted to this format.
+**Requirements:**
 
-**Crucial Constraints:**
-- Base the content *solely* on the provided Context and any preceding turns in the current generation sequence.
-- Adhere *strictly* to the JSON array format containing exactly ${numTurns} alternating turn objects.
-- Ensure the entire response body is *only* the JSON array.`;
+1. **Decision Quality:** The `instruction` must ask a meaningful question that reflects a real-world dilemma, tradeoff, or prioritization (e.g., How should I allocate funding across interventions? Is it better to pursue X or Y given these risks?).
+2. **Grounded Answers:** The `output` must cite or clearly incorporate reasoning from the context. Don’t hallucinate. If the context includes data or real examples (e.g., PlayPump vs hand pumps), summarize them.
+3. **Clarity and Structure:** The answer should be well-organized. Include a brief summary at the start, then go into the reasoning.
+4. **No External Knowledge:** Do not use outside facts. Only use what’s in the context.
+5. **Natural Language:** Write in natural, well-written English, suitable for someone aiming to improve how they think.
+
+**Constraints:**
+- Generate only *one* JSON object per context.
+- Do *not* include any text before or after the JSON object.
+- Do *not* include empty input fields.
+- No placeholder or generic questions—make them grounded and specific to the context.
+
+Example:
+{
+  "instruction": "Given the data on cost-effectiveness, should I prioritize donating to mosquito nets or deworming treatments?",
+  "output": "While both interventions are highly effective, deworming may provide more long-term educational benefits at a slightly lower cost per DALY averted..."
+}`;
 
             const messages = [
                 { role: "system", content: systemPrompt }
